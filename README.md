@@ -13,10 +13,13 @@ Create project folder and install all perrequisites mentioned below. After that 
 3. npm i mysql@version --save
 4. npm i body-parser@version --save
 5. npm i nodemon@version --save
-
 6. https://www.mysql.com/downloads/
 
 
+If you clone this project
+
+1. npm i
+2. npm install --save bcrypt
 
 ## Versioning
 
