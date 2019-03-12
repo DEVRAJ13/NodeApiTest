@@ -23,95 +23,107 @@ mysqlConnection.connect((err) => {
 
 app.listen(3000, () => console.log('Express server is running at port no : 30000'));
 
-app.get('/employees', (req, res) => {
-  mysqlConnection.query('SELECT * FROM employee', (err, rows, fields) => {
-    if (!err) {
-      console.log(rows);
-      res.send(rows);
-    }
-    else {
-      console.log(err);
-    }
-  });
-});
 
-app.get('/employees/:id', (req, res) => {
-  mysqlConnection.query('SELECT * FROM employee WHERE EmpID = ?', [req.params.id], (err, rows, fields) => {
-    if (!err) {
-      console.log(rows);
-      res.send(rows);
-    }
-    else {
-      console.log(err);
-    }
-  });
-});
-
-app.post('/users/signin', (req, res) => {
-  console.log("req::::", req.body);
+/*************************************************** */
+/*******************USER SIGNUP******************** */
+/************************************************** */
+app.post('/user/signup', (request, response) => {
+  console.log("Request", request.body);
+  console.log("Response", response);
   var today = new Date();
   var users = {
-    "first_name": req.body.first_name,
-    "last_name": req.body.last_name,
-    "email": req.body.email,
-    "password": bcrypt.hashSync(req.body.password, 10),
+    "first_name": request.body.first_name,
+    "last_name": request.body.last_name,
+    "email": request.body.email,
+    "password": request.body.password,
     "created": today,
     "modified": today
   }
-
-  mysqlConnection.query('INSERT INTO users SET ?', users, function (error, results, fields) {
-    if (error) {
-      console.log("error ocurred", error);
-      res.send({
-        "code": 400,
-        "failed": "error ocurred"
-      })
+  mysqlConnection.query('SELECT * FROM users WHERE email = ?', request.body.email, (error, results) => {
+    console.log("Results", results);
+    if (results.length > 0) {
+      response.send({
+        "code": 404,
+        "status": "Email already exist."
+      });
     } else {
-      console.log('The solution is: ', results);
-      res.send({
-        "code": 200,
-        "success": "user registered sucessfully"
+      mysqlConnection.query('INSERT INTO users SET ?', users, (error, results) => {
+        if (error) {
+          console.log("Error", error);
+          response.send({
+            "code": 400,
+            "status": "error ocurred"
+          });
+        } else {
+          console.log("Results", results);
+          response.send({
+            "code": 200,
+            "success": "user registered sucessfully"
+          });
+        }
       });
     }
   });
 });
+/*************************************************** */
+/***********USER SIGNUP END HERE******************** */
+/************************************************** */
 
 
 
-app.post('/users/login', (req, res) => {
-  var email = req.body.email;
-  var password = req.body.password;
-  let hash = bcrypt.hashSync(password, 10);
-  mysqlConnection.query('SELECT * FROM users WHERE email = ?', [email], function (error, results, fields) {
-    if (error) {
-      // console.log("error ocurred",error);
-      res.send({
-        "code": 400,
-        "failed": "error ocurred"
-      })
+/*******************USER LOGIN******************** */
+app.post('/user/login', (request, response) => {
+  var query = "SELECT * FROM users where email='" + request.body.email + "' and password='" + request.body.password + "'";
+  mysqlConnection.query(query, (error, results) => {
+    console.log("LOGIN RESULT", results);
+    if (results.length > 0) {
+      response.send({
+        "code": 200,
+        "success": "login sucessfull"
+      });
     } else {
-      // console.log('The solution is: ', results);
-      if (results.length > 0) {
-        if (results[0].password == hash) {
-          res.send({
-            "code": 200,
-            "success": "login sucessfull"
-          });
-        }
-        else {
-          res.send({
-            "code": 204,
-            "success": "Email and password does not match"
-          });
-        }
-      }
-      else {
-        res.send({
-          "code": 204,
-          "success": "Email does not exits"
-        });
-      }
+      response.send({
+        "code": 204,
+        "success": "Email and password does not match"
+      });
     }
   });
 });
+/***********USER LOGIN END HERE******************** */
+
+
+
+
+
+
+// app.get('/employees', (req, res) => {
+//   mysqlConnection.query('SELECT * FROM employee', (err, rows, fields) => {
+//     if (!err) {
+//       console.log(rows);
+//       res.send(rows);
+//     }
+//     else {
+//       console.log(err);
+//     }
+//   });
+// });
+
+// app.get('/employees/:id', (req, res) => {
+//   mysqlConnection.query('SELECT * FROM employee WHERE EmpID = ?', [req.params.id], (err, rows, fields) => {
+//     if (!err) {
+//       console.log(rows);
+//       res.send(rows);
+//     }
+//     else {
+//       console.log(err);
+//     }
+//   });
+// });
+
+
+
+
+
+
+
 
