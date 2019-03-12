@@ -1,11 +1,10 @@
 const mysql = require('mysql');
 const express = require('express');
-const bcrypt = require('bcrypt');
+const md5 = require('md5');
 
 var app = express();
 const bodyparser = require('body-parser');
 app.use(bodyparser.json());
-
 
 var mysqlConnection = mysql.createConnection({
   host: 'localhost',
@@ -24,23 +23,19 @@ mysqlConnection.connect((err) => {
 app.listen(3000, () => console.log('Express server is running at port no : 30000'));
 
 
-/*************************************************** */
-/*******************USER SIGNUP******************** */
 /************************************************** */
+/*******************USER SIGNUP******************** */
 app.post('/user/signup', (request, response) => {
-  console.log("Request", request.body);
-  console.log("Response", response);
   var today = new Date();
   var users = {
     "first_name": request.body.first_name,
     "last_name": request.body.last_name,
     "email": request.body.email,
-    "password": request.body.password,
+    "password": md5(request.body.password),
     "created": today,
     "modified": today
   }
   mysqlConnection.query('SELECT * FROM users WHERE email = ?', request.body.email, (error, results) => {
-    console.log("Results", results);
     if (results.length > 0) {
       response.send({
         "code": 404,
@@ -49,13 +44,11 @@ app.post('/user/signup', (request, response) => {
     } else {
       mysqlConnection.query('INSERT INTO users SET ?', users, (error, results) => {
         if (error) {
-          console.log("Error", error);
           response.send({
             "code": 400,
             "status": "error ocurred"
           });
         } else {
-          console.log("Results", results);
           response.send({
             "code": 200,
             "success": "user registered sucessfully"
@@ -65,17 +58,16 @@ app.post('/user/signup', (request, response) => {
     }
   });
 });
-/*************************************************** */
 /***********USER SIGNUP END HERE******************** */
 /************************************************** */
 
 
 
+/************************************************** */
 /*******************USER LOGIN******************** */
 app.post('/user/login', (request, response) => {
-  var query = "SELECT * FROM users where email='" + request.body.email + "' and password='" + request.body.password + "'";
+  var query = "SELECT * FROM users where email='" + request.body.email + "' and password='" + md5(request.body.password) + "'";
   mysqlConnection.query(query, (error, results) => {
-    console.log("LOGIN RESULT", results);
     if (results.length > 0) {
       response.send({
         "code": 200,
@@ -90,40 +82,108 @@ app.post('/user/login', (request, response) => {
   });
 });
 /***********USER LOGIN END HERE******************** */
+/************************************************** */
 
 
 
 
+/************************************************** */
+/*******************GET USERS******************** */
+app.get('/get/users', (request, response) => {
+  var userData = [];
+  mysqlConnection.query("SELECT * FROM users", (error, results) => {
+    if (!error) {
+      for (var i = 0; i < results.length; i++) {
+        var my_obj = {
+          id: results[i].id,
+          first_name: results[i].first_name,
+          last_name: results[i].last_name,
+          email: results[i].email,
+          created_date: results[i].created
+        };
+        userData.push(my_obj);
+      }
+      response.send({
+        "code": 200,
+        "data": userData
+      });
+    } else {
+      response.send({
+        "code": 500,
+        "message": "Server error"
+      });
+    }
+  });
+});
+/***********GET USER END HERE******************** */
+/************************************************** */
 
 
-// app.get('/employees', (req, res) => {
-//   mysqlConnection.query('SELECT * FROM employee', (err, rows, fields) => {
-//     if (!err) {
-//       console.log(rows);
-//       res.send(rows);
-//     }
-//     else {
-//       console.log(err);
-//     }
-//   });
-// });
 
-// app.get('/employees/:id', (req, res) => {
-//   mysqlConnection.query('SELECT * FROM employee WHERE EmpID = ?', [req.params.id], (err, rows, fields) => {
-//     if (!err) {
-//       console.log(rows);
-//       res.send(rows);
-//     }
-//     else {
-//       console.log(err);
-//     }
-//   });
-// });
+
+/************************************************** */
+/*******************GET USERS BY ID******************** */
+app.get('/get/user/:id', (request, response) => {
+  mysqlConnection.query("SELECT * FROM users WHERE id = ?", [request.params.id], (error, results) => {
+    if (!error) {
+      response.send({
+        "code": 200,
+        "data": results
+      });
+    } else {
+      response.send({
+        "code": 500,
+        "message": "Server error"
+      });
+    }
+  });
+});
+/***********GET USER BY ID END HERE******************** */
+/************************************************** */
 
 
 
+/************************************************** */
+/*******************DELETE USER BY ID******************** */
+app.get("/delete/user/:id", (request, response) => {
+  mysqlConnection.query("DELETE FROM users WHERE id = ?", [request.params.id], (error, results) => {
+    if (!error) {
+      response.send({
+        "code": 200,
+        "data": results,
+        "message":"user deleted sucessfully"
+      });
+    } else {
+      response.send({
+        "code": 500,
+        "error":error,
+        "message": "server error"
+      });
+    }
+  });
+});
+
+/***********DELETE USER BY ID END HERE******************** */
+/************************************************** */
 
 
+/**************UPDATE USER IN DATABASE******************************* */
+app.put("/update/user/:id", (request, response) => {
+  mysqlConnection.query("UPDATE users SET first_name = ? WHERE id = ?", [request.body.first_name, request.params.id], (error, results) => {
+    if (!error) {
+      response.send({
+        "code": 200,
+        "data": results,
+        "message":"user deleted sucessfully"
+      });
+    } else {
+      response.send({
+        "code": 500,
+        "error":error,
+        "message": "server error"
+      });
+    }
+  });
+});
 
-
-
+/**************UPDATE USER IN DATABASE END HERE******************************* */
