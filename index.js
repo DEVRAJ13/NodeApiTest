@@ -1,8 +1,10 @@
 const mysql = require('mysql');
 const express = require('express');
 const md5 = require('md5');
-
+var cors = require('cors')
 var app = express();
+app.use(cors({credentials: true, origin: true}))
+
 const bodyparser = require('body-parser');
 app.use(bodyparser.json());
 
@@ -31,6 +33,7 @@ app.post('/user/signup', (request, response) => {
     "first_name": request.body.first_name,
     "last_name": request.body.last_name,
     "email": request.body.email,
+    "profile_pic": request.body.profile_pic,
     "password": md5(request.body.password),
     "created": today,
     "modified": today
@@ -46,6 +49,7 @@ app.post('/user/signup', (request, response) => {
         if (error) {
           response.send({
             "code": 400,
+            "error":error,
             "status": "error ocurred"
           });
         } else {
@@ -98,6 +102,7 @@ app.get('/get/users', (request, response) => {
           id: results[i].id,
           first_name: results[i].first_name,
           last_name: results[i].last_name,
+          profile_pic: results[i].profile_pic,
           email: results[i].email,
           created_date: results[i].created
         };
